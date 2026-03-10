@@ -2,50 +2,95 @@
 
 ## Phase 1 – Reconnaissance
 
-The attacker began by scanning the network to identify exposed services.
+Network traffic analysis revealed scanning activity from an external IP address targeting services on the victim machine.
 
-Evidence indicates scanning activity targeting multiple ports associated with web and SMB services.
+Suspicious source IP:
+`87.96.21.84`
+
+Ports scanned included:
+80 (HTTP)
+443 (HTTPS)
+445 (SMB)
+
+This suggests the attacker was identifying exposed services for exploitation.
 
 ---
 
 ## Phase 2 – Initial Access
 
-The attacker leveraged compromised credentials to authenticate to a service running on the target system.
+The attacker targeted a Microsoft SQL Server instance using compromised credentials.
 
-This allowed the attacker to execute commands remotely.
+Evidence shows login attempts against the **sa** account.
 
----
-
-## Phase 3 – Execution
-
-PowerShell commands were used to execute malicious scripts.
-
-PowerShell is commonly abused by attackers because it is a trusted Windows administration tool.
+After successful authentication, the attacker gained the ability to execute commands remotely.
 
 ---
 
-## Phase 4 – Defense Evasion
+## Phase 3 – Command Execution
 
-The attacker disabled Windows Defender to avoid detection.
+The attacker enabled the SQL Server feature **xp_cmdshell** which allows system command execution.
 
-Security services were modified or stopped to allow malware execution.
+Command observed:
 
----
+`EXEC sp_configure 'xp_cmdshell', 1`
+`RECONFIGURE`
 
-## Phase 5 – Persistence
-
-Scheduled tasks were created to maintain persistence after system reboot.
-
----
-
-## Phase 6 – Credential Access
-
-Credential dumping activity was detected, indicating the attacker attempted to extract password hashes from the system.
+This allowed the attacker to execute OS-level commands from SQL Server.
 
 ---
 
-## Phase 7 – Impact
+## Phase 4 – Payload Download
 
-The attacker deployed **BlueSky ransomware**, encrypting victim files and leaving a ransom note.
+The attacker downloaded malicious PowerShell scripts from remote infrastructure.
 
-Encrypted files were renamed with the `.bluesky` extension.
+Example URL:
+
+`hxxp[:]//87.96.21.84/del.ps1`
+
+The script was used to stage further malicious activity.
+
+---
+
+## Phase 5 – Defense Evasion
+
+Security controls were disabled to avoid detection.
+
+Windows Defender services were stopped before malware execution.
+
+---
+
+## Phase 6 – Credential Dumping
+
+Credential dumping tools were executed to extract password hashes.
+
+PowerShell script used:
+
+`Invoke-PowerDump.ps1`
+
+Extracted hashes were saved to:
+
+`hashes.txt`
+
+---
+
+## Phase 7 – Persistence
+
+A scheduled task was created to maintain access.
+
+Command used:
+
+`schtasks /create`
+
+This allowed the attacker to regain execution after system reboot.
+
+---
+
+## Phase 8 – Ransomware Deployment
+
+The final stage involved deploying BlueSky ransomware.
+
+Files were encrypted and renamed with the extension:
+
+`.bluesky`
+
+A ransom note was dropped on the system.
